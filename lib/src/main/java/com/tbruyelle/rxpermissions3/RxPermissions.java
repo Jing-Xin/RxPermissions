@@ -12,26 +12,27 @@
  * limitations under the License.
  */
 
-package com.tbruyelle.rxpermissions2;
+package com.tbruyelle.rxpermissions3;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.os.Build;
-import android.support.annotation.NonNull;
-import android.support.annotation.VisibleForTesting;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentActivity;
-import android.support.v4.app.FragmentManager;
 import android.text.TextUtils;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.VisibleForTesting;
+import androidx.fragment.app.FragmentActivity;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import io.reactivex.Observable;
-import io.reactivex.ObservableSource;
-import io.reactivex.ObservableTransformer;
-import io.reactivex.functions.Function;
-import io.reactivex.subjects.PublishSubject;
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.core.ObservableSource;
+import io.reactivex.rxjava3.core.ObservableTransformer;
+import io.reactivex.rxjava3.functions.Function;
+import io.reactivex.rxjava3.subjects.PublishSubject;
 
 public class RxPermissions {
 
@@ -197,29 +198,7 @@ public class RxPermissions {
         if (permissions == null || permissions.length == 0) {
             throw new IllegalArgumentException("RxPermissions.request/requestEach requires at least one input permission");
         }
-        return oneOf(trigger, pending(permissions))
-                .flatMap(new Function<Object, Observable<Permission>>() {
-                    @Override
-                    public Observable<Permission> apply(Object o) {
-                        return requestImplementation(permissions);
-                    }
-                });
-    }
-
-    private Observable<?> pending(final String... permissions) {
-        for (String p : permissions) {
-            if (!mRxPermissionsFragment.get().containsByPermission(p)) {
-                return Observable.empty();
-            }
-        }
-        return Observable.just(TRIGGER);
-    }
-
-    private Observable<?> oneOf(Observable<?> trigger, Observable<?> pending) {
-        if (trigger == null) {
-            return Observable.just(TRIGGER);
-        }
-        return Observable.merge(trigger, pending);
+        return trigger.flatMap( o -> requestImplementation(permissions));
     }
 
     @TargetApi(Build.VERSION_CODES.M)
@@ -322,7 +301,7 @@ public class RxPermissions {
         return Build.VERSION.SDK_INT >= Build.VERSION_CODES.M;
     }
 
-    void onRequestPermissionsResult(String permissions[], int[] grantResults) {
+    void onRequestPermissionsResult(String[] permissions, int[] grantResults) {
         mRxPermissionsFragment.get().onRequestPermissionsResult(permissions, grantResults, new boolean[permissions.length]);
     }
 
